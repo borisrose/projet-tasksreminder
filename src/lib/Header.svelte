@@ -26,7 +26,7 @@ const headerAction = (header) => {
 </script>
 
 <header  use:headerAction>
-    <h1> My to-do list </h1>
+    <h1> Tasks Reminder</h1>
 </header>
 
 

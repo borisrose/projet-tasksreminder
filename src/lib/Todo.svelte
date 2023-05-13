@@ -1,8 +1,10 @@
 <script>
 import { flip } from "svelte/animate";
+import Message from "./Message.svelte";
 
     
-
+let editMode = false
+let info = ''
 
 $:preTasks = JSON
             .parse(localStorage.getItem('tasks')) 
@@ -19,15 +21,20 @@ $:archivedTasks = preTasks ? preTasks.filter(t => t.isArchived === true) : []
 $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
 
+
+
     $: {
         console.log('taks have been modified', preTasks);
+       
     }
 
     let newTask = {}
+    let editTask = {}
 
     let message;
 
     const sectionAction = (section, tasks) => {
+
 
         console.log('section mounted')
 
@@ -41,6 +48,24 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
         if(!saveTasks) {
             localStorage.setItem('tasks', JSON.stringify(tasks))
+            info = 'Welcome 😁 ! Feel free to use this app anytime you want'
+            setTimeout(() => {
+
+                info = ''
+
+            }, 3000)
+        }
+        else {
+
+            const onTasks = saveTasks.filter(t => !t.isDeleted && !t.isArchived)
+            info = `Welcome 😁 ! You have ${onTasks.length} on-going task(s)`
+            setTimeout(() => {
+
+                info = ''
+
+            }, 3000)
+       
+
         }
         
         
@@ -58,6 +83,8 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
     const handleAddTask = () => {
 
+
+      
         console.log('handle add task')
         if(newTask.content){
 
@@ -73,11 +100,20 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
             })
 
+            info = `task with id ${preTasks.length+1} is added`
+            setTimeout(() => {
+
+                info = ''
+
+            },2000)
+
+
             preTasks = preTasks
 
             localStorage.removeItem('tasks')
             localStorage.setItem('tasks', JSON.stringify(preTasks))
             newTask = {}
+
         }
         else {
             message = 'you need to add a task content'
@@ -90,10 +126,49 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
     const handleDeleteTask = (id) => {
         
 
+   
+
+
+
         console.log('handle archive task')
 
         const deletedTask = preTasks.filter(t => t.id === id)[0]
         const notDeletedTasks = preTasks.filter(t => t.id !== id)
+
+
+        if(deletedTask.isDeleted){
+
+
+            info = `task with id ${id} is fully deleted`
+            setTimeout(() => {
+
+                info = ''
+
+            },2000)
+
+         
+
+            preTasks = [
+                ...notDeletedTasks,
+              
+            ]
+
+            preTasks = preTasks 
+
+            localStorage.removeItem('tasks')
+            localStorage.setItem('tasks', JSON.stringify(preTasks))
+
+
+            return 
+        }
+
+
+        info = `task with id ${id} is deleted`
+        setTimeout(() => {
+
+            info = ''
+
+        },2000)
 
         //modifying the task 
         deletedTask.isArchived = false
@@ -114,7 +189,69 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
     const handleEditTask = (id) => {
 
+        info = `task with id ${id} is being edited`
+        setTimeout(() => {
+
+            info = ''
+
+        },2000)
+
         console.log('handle edit task')
+
+
+        if(editMode && editTask.id == id) {
+
+            const editedTask = preTasks.filter(t => t.id === id)[0]
+            const othersTasks = preTasks.filter(t => t.id !== id)
+            
+          
+
+            const updatedTask = {
+
+                ...editedTask,
+                content: editTask.content
+            }
+
+            console.log('updatedTask', updatedTask)
+         
+            preTasks = [ ...othersTasks, updatedTask] 
+
+            preTasks = preTasks
+
+            localStorage.removeItem('tasks')
+            localStorage.setItem('tasks', JSON.stringify(preTasks))
+
+            editMode = false // close the modal
+            editTask = {} // reset
+            return
+        }
+        
+        if(editMode && editTask.id !== id && editTask.content ){
+            //someone wants to edit another task then the one they are editing
+            
+            info = `You want to edit another task, edit it then click on save `
+            setTimeout(() => {
+
+                info = ''
+
+            },2000)
+ 
+            
+            editTask.content = ''
+            editTask.id = id
+            
+            return
+
+        }
+
+        if(!editMode && !editTask.content && !editTask.id){
+
+            editTask.id = id
+            editMode = true
+
+            return
+        }
+
 
 
 
@@ -125,6 +262,12 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
     const  handleArchiveTask = (id) => {
 
+        info = `task with id ${id} is archived`
+        setTimeout(() => {
+
+            info = ''
+
+        },2000)
 
         console.log('handle archive task')
 
@@ -151,7 +294,12 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
     const handleBackOnTask = (id) => {
 
 
+        info = `task with id : ${id} is on again`
+        setTimeout(() => {
 
+            info = ''
+
+        },2000)
         console.log('handle archive task')
 
         const backonTask = preTasks.filter(t => t.id === id)[0]
@@ -183,6 +331,9 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
 
 <section use:sectionAction={preTasks} class="todolist-section">
+    {#if info}
+        <Message {info}/>
+    {/if }
 
 
     <form aria-label="The adding task div" class="add-task-container"
@@ -220,13 +371,21 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
         {#each ongoingTasks as task, i(task.id)}
         <li class="task-container" animate:flip="{{duration : 3000}}">
-            <div class="task-description">
+                
+                {#if editMode && editTask.id === task.id} 
+                <div class="task-edit-input">
+                    <input type="text" placeholder={task.content} bind:value={editTask.content} class="edit-input"> 
+                </div>    
+                {:else} 
+                <div class="task-description"> 
                 {task.content}
-            </div>
+                </div>
+                {/if}
+         
             <div class="task-handlers">
-                <button on:click={() => handleDeleteTask(task.id)}>Supprimer</button>
-                <button on:click={() => handleArchiveTask(task.id)}>Archiver</button>
-                <button on:click={() => handleEditTask(task.id)}>Modifier</button>
+                <button on:click={() => handleDeleteTask(task.id)}>Delete</button>
+                <button on:click={() => handleArchiveTask(task.id)}>Archive</button>
+                <button on:click={() => handleEditTask(task.id)}>{editMode  && editTask.id === task.id? 'Save' : 'Edit'}</button>
             </div>
         </li>
         {:else}
@@ -251,8 +410,8 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
                 {task.content}
             </div>
             <div class="task-handlers">
-                <button on:click={() => handleDeleteTask(task.id)}>Supprimer</button>
-                <button on:click={() => handleArchiveTask(task.id)}>Désarchiver</button>
+                <button on:click={() => handleDeleteTask(task.id)}>Delete</button>
+                <button on:click={() => handleBackOnTask(task.id)}>Back on</button>
              
             </div>
             </li>
@@ -286,7 +445,8 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
             </div>
             <div class="task-handlers">
 
-                <button on:click={() => handleBackOnTask(task.id)}> Réactualiser </button>
+                <button on:click={() => handleBackOnTask(task.id)}> Back on</button>
+                <button on:click={() => handleDeleteTask(task.id)}> Delete permanently </button>
              
             </div>
             </li>
@@ -311,6 +471,7 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
    
     .todolist-section {
         margin: 10px;
+  
     }
 
     .add-task-container {
@@ -324,8 +485,8 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
         .add-task-input-container {
             display: flex;
             width: 80%;
-        }
-        input {
+
+            input {
             font-size: 18px;
             width: 100%;
             height: 50px;
@@ -335,6 +496,8 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
                 text-indent: 10px;
             }
         }
+        }
+      
 
         .submit-button {
 
@@ -375,8 +538,37 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
      
         align-items: center;
         justify-content: flex-start;
+        height: 100%;
    
+      
+        padding: 10px 0;
+        p {
+            margin: 0;
+       
+        }
+    }
+
+    .edit-input {
+        height: 100%;
+        border: none;
+        display: flex;
+        font-size: 18px;
+        margin: 10px 0;
+        outline: none;
+        text-indent: 10px;
         width: 100%;
+    }
+
+    .no-task {
+
+
+        display: flex;
+     
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+   
+      
         padding: 10px 0;
         p {
             margin: 0;
@@ -405,6 +597,21 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
             
         }
 
+        .task-edit-input {
+
+            width: 50%;
+            display: flex;
+       
+            @media (max-width: 900px) {
+              
+               
+                width: 100%;
+                
+            
+            }
+
+            
+        }
 
         .task-description {
 
