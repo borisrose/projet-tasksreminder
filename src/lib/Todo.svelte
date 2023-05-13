@@ -189,15 +189,6 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
     const handleEditTask = (id) => {
 
-        info = `task with id ${id} is being edited`
-        setTimeout(() => {
-
-            info = ''
-
-        },2000)
-
-        console.log('handle edit task')
-
 
         if(editMode && editTask.id == id) {
 
@@ -209,7 +200,7 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
             const updatedTask = {
 
                 ...editedTask,
-                content: editTask.content
+                content: editTask.content ? editTask.content : editedTask.content
             }
 
             console.log('updatedTask', updatedTask)
@@ -248,6 +239,20 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
 
             editTask.id = id
             editMode = true
+
+            info = `Make any change you want then click on Save`
+            setTimeout(() => {
+
+                info = 'If no change is made, the previous content will remain'
+                setTimeout(() => {
+
+                    info = ''
+
+                }, 3000)
+
+            },3000)
+
+
 
             return
         }
@@ -354,7 +359,7 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
             />
         </div>
         <button type="submit" class="submit-button" disabled="{!newTask.content}">
-            Ajouter
+            Add
         </button>
 
 
@@ -491,6 +496,7 @@ $:deletedTasks = preTasks ? preTasks.filter(t => t.isDeleted === true) : []
             width: 100%;
             height: 50px;
             text-indent: 10px;
+            outline: none;
             &::placeholder {
 
                 text-indent: 10px;
